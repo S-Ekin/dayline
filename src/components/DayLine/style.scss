@@ -1,0 +1,441 @@
+.dl-main {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dl-main-config {
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+.dl-container {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部工具条 */
+.dl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--divider, rgba(31, 35, 41, 0.1));
+  flex-shrink: 0;
+}
+
+.dl-toolbar .dl-date-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.dl-date-btn {
+  border: 1px solid var(--divider, rgba(31, 35, 41, 0.18));
+  background: var(--semi-color-fill-0, #f2f3f5);
+  color: var(--ccm-chart-N900, #1f2329);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dl-date-btn:hover {
+  background: var(--semi-color-fill-1, #e8e9eb);
+}
+
+.dl-date-btn.active {
+  background: var(--semi-color-primary, #3370ff);
+  border-color: var(--semi-color-primary, #3370ff);
+  color: #fff;
+}
+
+.dl-day-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ccm-chart-N900, #1f2329);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.dl-day-sub {
+  font-size: 12px;
+  color: var(--ccm-chart-N900, #1f2329);
+  opacity: 0.55;
+}
+
+.dl-count {
+  font-size: 12px;
+  color: var(--ccm-chart-N900, #1f2329);
+  opacity: 0.7;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.dl-refresh-btn {
+  border: none;
+  background: var(--semi-color-fill-1, #e8e9eb);
+  color: var(--ccm-chart-N900, #1f2329);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dl-refresh-btn:hover {
+  background: var(--semi-color-fill-2, #dcdfe3);
+}
+
+/* 滚动区 */
+.dl-scroll {
+  flex: 1;
+  width: 100%;
+  overflow: auto;
+}
+
+.dl-chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  padding: 10px 12px 20px;
+  box-sizing: border-box;
+}
+
+.dl-chart svg {
+  cursor: pointer;
+}
+
+.dl-chart .dl-ev {
+  cursor: pointer;
+}
+
+.dl-chart .dl-ev rect,
+.dl-chart .dl-ev circle {
+  transition: filter 0.15s ease;
+}
+
+.dl-chart .dl-ev:hover rect,
+.dl-chart .dl-ev:hover circle {
+  filter: brightness(1.1);
+}
+
+.dl-chart.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--ccm-chart-N900, #1f2329);
+  padding: 20px;
+  text-align: center;
+}
+
+/* 配置面板 */
+.dl-settings {
+  border-left: 1px solid var(--divider, rgba(31, 35, 41, 0.15));
+  flex: 0 360px;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: #fafbfc;
+}
+
+.dl-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.dl-save-row {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider, rgba(31, 35, 41, 0.1));
+}
+
+.dl-btn {
+  width: 100%;
+}
+
+.dl-section {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--divider, rgba(31, 35, 41, 0.08));
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.dl-section:first-child {
+  margin-top: 0;
+}
+
+/* 记录表列表 */
+.dl-table-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dl-table-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.dl-table-add-row .semi-select {
+  flex: 1;
+}
+
+.dl-table-card {
+  border: 1px solid var(--divider, rgba(31, 35, 41, 0.12));
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.dl-table-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dl-table-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ccm-chart-N900, #1f2329);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-table-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--semi-color-fill-2, #dcdfe3);
+  color: var(--ccm-chart-N900, #1f2329);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.dl-table-remove:hover {
+  background: var(--semi-danger-light-4, #f5c6c6);
+  color: #f54a45;
+}
+
+.dl-table-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dl-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dl-field-row .dl-f-label {
+  width: 68px;
+  font-size: 12px;
+  color: var(--ccm-chart-N900, #1f2329);
+  opacity: 0.75;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.dl-field-row .semi-select {
+  flex: 1;
+}
+
+.dl-hint {
+  font-size: 11px;
+  color: var(--ccm-chart-N900, #1f2329);
+  opacity: 0.5;
+  line-height: 1.5;
+}
+
+/* 日期快捷 */
+.dl-date-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dl-date-presets .dl-date-btn {
+  flex: 1;
+  text-align: center;
+}
+
+/* 事件样式 */
+.dl-event-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dl-event-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dl-event-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 12px;
+  background: var(--semi-color-fill-0, #f2f3f5);
+  border-radius: 10px;
+  border-left: 3px solid #999;
+  font-size: 13px;
+  color: var(--ccm-chart-N900, #1f2329);
+  max-width: 100%;
+  margin-bottom: 6px;
+}
+
+.dl-event-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.dl-event-color {
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  box-shadow: 0 0 0 1px var(--divider, rgba(31, 35, 41, 0.2));
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.dl-event-color:hover {
+  transform: scale(1.15);
+}
+
+.dl-event-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--semi-color-fill-2, #dcdfe3);
+  color: var(--ccm-chart-N900, #1f2329);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.dl-event-remove:hover {
+  background: var(--semi-danger-light-4, #f5c6c6);
+  color: #f54a45;
+}
+
+.dl-default-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dl-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dl-color-input {
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--divider, rgba(31, 35, 41, 0.15));
+  border-radius: 4px;
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+}
+
+.dl-color-hex {
+  font-size: 12px;
+  color: var(--ccm-chart-N900, #1f2329);
+  font-family: monospace;
+}
+
+/* 图标选择器 */
+.dl-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  width: 280px;
+}
+
+.dl-icon-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.dl-icon-picker-item:hover {
+  background: var(--semi-color-fill-1, #e8e9eb);
+  transform: scale(1.15);
+}
+
+.dl-icon-picker-item.active {
+  background: var(--semi-color-primary-light-default, #e0eaff);
+  border-color: var(--semi-color-primary, #3370ff);
+}
+
+.dl-icon-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--divider, rgba(31, 35, 41, 0.15));
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dl-icon-picker-trigger:hover {
+  border-color: var(--semi-color-primary, #3370ff);
+}
+
+.dl-form .semi-slider-wrapper {
+  padding: 4px 0;
+}

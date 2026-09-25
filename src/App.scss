@@ -1,0 +1,51 @@
+@import "reset-css";
+
+body[theme-mode="light"] {
+  --ccm-chart-P100: #ece2fe;
+  --ccm-chart-P500: #7f3bf5;
+  --ccm-chart-B500: #3370ff;
+  --ccm-chart-W300: #7edafb;
+  --ccm-chart-R500: #f54a45;
+  --ccm-chart-N900: #1f2329;
+
+  --dl-axis: #10b981;
+  --dl-tick: rgba(31, 35, 41, 0.14);
+  --dl-hour: #888;
+  --dl-text: #1f2329;
+  --dl-sub: #999;
+  --dl-bar-bg: #f3f5f7;
+  --dl-hover: #e6f6ef;
+}
+
+body[theme-mode="dark"] {
+  --ccm-chart-P100: #361d61;
+  --ccm-chart-P500: #9762f5;
+  --ccm-chart-B500: #4c88ff;
+  --ccm-chart-W300: #2782a3;
+  --ccm-chart-R500: #f05b56;
+  --ccm-chart-N900: #ebebeb;
+
+  --dl-axis: #34d399;
+  --dl-tick: rgba(235, 235, 235, 0.16);
+  --dl-hour: #999;
+  --dl-text: #ebebeb;
+  --dl-sub: #7a7a7a;
+  --dl-bar-bg: #20242b;
+  --dl-hover: #17342a;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  background-image: none !important;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, Tahoma,
+    PingFang SC, Microsoft Yahei, Arial, Hiragino Sans GB, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+}
