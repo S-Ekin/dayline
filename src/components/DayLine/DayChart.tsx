@@ -116,9 +116,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               <text x={px - pointR - 6} y={py} textAnchor="end" dominantBaseline="central" fontSize={14}>
                 {ev.icon}
               </text>
-              {/* 悬停：名称 + 时间 */}
+              {/* 悬停：名称 + 时间（置于图标更左侧，避免盖住图标） */}
               {show && (
-                <text x={px - pointR - 8} y={py} textAnchor="end" dominantBaseline="central"
+                <text x={px - pointR - 30} y={py} textAnchor="end" dominantBaseline="central"
                   fontSize={13} paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3} strokeLinejoin="round">
                   <tspan fontWeight={600}>{ev.taskValue}</tspan>
                   <tspan fontWeight={800} fill={ev.color}> {formatTime(ev.startMin)}</tspan>
