@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DayEvent, formatTime } from './utils';
 import { ICustomConfig } from './config';
 
@@ -15,15 +15,25 @@ const AXIS_GAP = 16;
 const POINT_STEP = 34;
 const BAR_W = 30;
 const INTERVAL_STEP = 38;
-const LABEL_SPACE = 190;
 
-/** 24 小时时间轴：轴线居中，刻度画在轴线上；左侧时间点、右侧时间区间；图标常显，名称+时间悬停显示 */
+/** 24 小时时间轴：轴线位于容器正中；左侧时间点、右侧时间区间；刻度画在轴线上；图标常显，名称+时间悬停显示 */
 export function DayChart({ events, custom, isToday, emptyText, onEventClick }: DayChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(720);
   const [hover, setHover] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      setWidth(Math.max(360, entries[0].contentRect.width));
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   if (events.length === 0) {
     return (
-      <div className="dl-chart empty">
+      <div ref={containerRef} className="dl-chart empty">
         {emptyText || ''}
       </div>
     );
@@ -37,25 +47,30 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
   const maxIntervalLane = intervals.reduce((m, e) => Math.max(m, e.lane), -1);
 
-  const pointSpan = Math.max(64, (maxPointLane + 1) * POINT_STEP + pointR * 2 + 10);
-  const intervalSpan = Math.max(54, (maxIntervalLane + 1) * INTERVAL_STEP);
-  const axisX = PAD_LEFT + pointSpan + AXIS_GAP;
+  // 轴线固定在容器正中
+  const W = width;
+  const axisX = W / 2;
   const padTop = 34;
   const padBottom = 24;
   const chartH = padTop + 24 * hourH + padBottom;
-  const svgW = axisX + AXIS_GAP + intervalSpan + LABEL_SPACE;
+
+  // 车道间距按可用宽度自适应收缩，保证内容不越界
+  const leftUsable = axisX - AXIS_GAP - PAD_LEFT - 2 * pointR - 8;
+  const rightUsable = W - axisX - AXIS_GAP - BAR_W - 8;
+  const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
+  const intervalStep = maxIntervalLane > 0 ? Math.min(INTERVAL_STEP, Math.max(8, rightUsable / maxIntervalLane)) : INTERVAL_STEP;
 
   const yOf = (min: number) => padTop + (min / 60) * hourH;
-  const pointX = (lane: number) => axisX - AXIS_GAP - pointR - 8 - lane * POINT_STEP;
-  const barX = (lane: number) => axisX + AXIS_GAP + lane * INTERVAL_STEP;
+  const pointX = (lane: number) => axisX - AXIS_GAP - pointR - 8 - lane * pointStep;
+  const barX = (lane: number) => axisX + AXIS_GAP + lane * intervalStep;
 
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
   return (
-    <div className="dl-chart">
-      <svg width={svgW} height={chartH} style={{ display: 'block', minWidth: '100%' }}>
-        {/* 中间轴线 */}
+    <div ref={containerRef} className="dl-chart">
+      <svg width={W} height={chartH} style={{ display: 'block', minWidth: '100%' }}>
+        {/* 中间轴线（容器正中） */}
         <line x1={axisX} y1={padTop} x2={axisX} y2={chartH - padBottom}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
@@ -75,15 +90,10 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           );
         })}
 
-        {/* 现在时间线 */}
+        {/* 现在时间线（仅显示线，无文字） */}
         {isToday && nowMin >= 0 && nowMin <= 1440 && (
-          <g>
-            <line x1={PAD_LEFT} y1={yOf(nowMin)} x2={axisX + AXIS_GAP + intervalSpan} y2={yOf(nowMin)}
-              stroke="var(--dl-axis,#10b981)" strokeWidth={1.2} strokeDasharray="4,4" />
-            <rect x={axisX - 26} y={yOf(nowMin) - 9} width={48} height={18} rx={9} fill="#10b981" />
-            <text x={axisX - 2} y={yOf(nowMin)} textAnchor="middle" dominantBaseline="central"
-              fontSize={10} fill="#fff" fontWeight={600}>现在</text>
-          </g>
+          <line x1={PAD_LEFT} y1={yOf(nowMin)} x2={W - PAD_LEFT} y2={yOf(nowMin)}
+            stroke="var(--dl-axis,#10b981)" strokeWidth={1.4} strokeDasharray="5,4" />
         )}
 
         {/* 左侧：时间点 + 曲线连接到轴线，图标常显 */}
