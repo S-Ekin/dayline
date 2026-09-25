@@ -178,7 +178,10 @@ export function buildDayEvents(
       });
     }
   }
-  return assignLanes(events);
+  // 时间点与时间区间分开独立分配车道（时间点居左、区间居右，互不挤压）
+  const points = events.filter((e) => !e.isInterval);
+  const intervals = events.filter((e) => e.isInterval);
+  return [...assignLanes(points), ...assignLanes(intervals)].sort((a, b) => a.startMin - b.startMin);
 }
 
 /** 贪心车道分配：时间点按 24 分钟窗口占位，区间按实际时长占位，避免重叠 */

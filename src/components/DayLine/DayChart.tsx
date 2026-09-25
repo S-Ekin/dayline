@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { DayEvent, formatTime } from './utils';
 import { ICustomConfig } from './config';
 
@@ -10,25 +10,20 @@ interface DayChartProps {
   onEventClick: (ev: DayEvent) => void;
 }
 
-const HOUR_LABEL_W = 64;
+const HOUR_LABEL_W = 56;
+const AXIS_GAP = 10;
+const POINT_STEP = 34;
+const BAR_W = 26;
+const INTERVAL_STEP = 36;
+const LABEL_SPACE = 180;
 
-/** 24 小时纵向时间轴：左侧小时刻度 + 右侧按车道排布的事件（区间条 / 时间点） */
+/** 24 小时时间轴：轴线居中，左侧刻度+时间点（曲线连到轴线），右侧时间区间；标签仅悬停显示 */
 export function DayChart({ events, custom, isToday, emptyText, onEventClick }: DayChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(720);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(360, entries[0].contentRect.width));
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
+  const [hover, setHover] = useState<string | null>(null);
 
   if (events.length === 0) {
     return (
-      <div ref={containerRef} className="dl-chart empty">
+      <div className="dl-chart empty">
         {emptyText || ''}
       </div>
     );
@@ -37,35 +32,38 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const hourH = custom.hourHeight;
   const pointR = custom.pointRadius;
 
-  const maxLane = events.reduce((m, e) => Math.max(m, e.lane), 0);
-  const laneCount = maxLane + 1;
-  const laneW = Math.max(150, (width - HOUR_LABEL_W - 36) / Math.max(laneCount, 1));
-  const labelW = 200;
+  const points = events.filter((e) => !e.isInterval);
+  const intervals = events.filter((e) => e.isInterval);
+  const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
+  const maxIntervalLane = intervals.reduce((m, e) => Math.max(m, e.lane), -1);
 
-  const axisX = HOUR_LABEL_W;
-  const padTop = 22;
-  const padBottom = 22;
+  const pointSpan = Math.max(56, (maxPointLane + 1) * POINT_STEP);
+  const intervalSpan = Math.max(50, (maxIntervalLane + 1) * INTERVAL_STEP);
+  const axisX = HOUR_LABEL_W + AXIS_GAP + pointSpan + AXIS_GAP;
+  const padTop = 34;
+  const padBottom = 24;
   const chartH = padTop + 24 * hourH + padBottom;
-  const svgW = axisX + laneCount * laneW + labelW + 20;
+  const svgW = axisX + AXIS_GAP + intervalSpan + LABEL_SPACE;
 
   const yOf = (min: number) => padTop + (min / 60) * hourH;
+  const pointX = (lane: number) => axisX - AXIS_GAP - pointR - 4 - lane * POINT_STEP;
+  const barX = (lane: number) => axisX + AXIS_GAP + lane * INTERVAL_STEP;
 
-  // 现在时间指示线（今天）
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
   return (
-    <div ref={containerRef} className="dl-chart">
+    <div className="dl-chart">
       <svg width={svgW} height={chartH} style={{ display: 'block', minWidth: '100%' }}>
-        {/* 小时刻度 */}
+        {/* 小时刻度（左侧） */}
         {Array.from({ length: 24 }, (_, h) => {
           const y = yOf(h * 60);
           return (
             <g key={h}>
-              <line x1={axisX} y1={y} x2={axisX + laneCount * laneW} y2={y}
+              <line x1={HOUR_LABEL_W + 6} y1={y} x2={axisX - 4} y2={y}
                 stroke="var(--dl-tick, rgba(31,35,41,0.12))" strokeWidth={h === 0 ? 1.2 : 0.7}
                 strokeDasharray={h === 0 ? undefined : '2,3'} />
-              <text x={axisX - 8} y={y} textAnchor="end" dominantBaseline="central"
+              <text x={HOUR_LABEL_W - 2} y={y} textAnchor="end" dominantBaseline="central"
                 fontSize={11} fill="var(--dl-hour,#888)">
                 {String(h).padStart(2, '0')}:00
               </text>
@@ -73,85 +71,78 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           );
         })}
 
-        {/* 轴线 */}
+        {/* 中间轴线 */}
         <line x1={axisX} y1={padTop} x2={axisX} y2={chartH - padBottom}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
         {/* 现在时间线 */}
         {isToday && nowMin >= 0 && nowMin <= 1440 && (
           <g>
-            <line x1={axisX} y1={yOf(nowMin)} x2={axisX + laneCount * laneW} y2={yOf(nowMin)}
+            <line x1={HOUR_LABEL_W} y1={yOf(nowMin)} x2={axisX + AXIS_GAP + intervalSpan} y2={yOf(nowMin)}
               stroke="var(--dl-axis,#10b981)" strokeWidth={1.2} strokeDasharray="4,4" />
-            <rect x={axisX - 20} y={yOf(nowMin) - 9} width={40} height={18} rx={9} fill="#10b981" />
-            <text x={axisX} y={yOf(nowMin)} textAnchor="middle" dominantBaseline="central"
+            <rect x={axisX - 26} y={yOf(nowMin) - 9} width={48} height={18} rx={9} fill="#10b981" />
+            <text x={axisX - 2} y={yOf(nowMin)} textAnchor="middle" dominantBaseline="central"
               fontSize={10} fill="#fff" fontWeight={600}>现在</text>
           </g>
         )}
 
-        {/* 事件 */}
-        {events.map((ev) => {
-          const laneX = axisX + ev.lane * laneW;
-          const cx = laneX + laneW / 2;
-          const y1 = yOf(ev.startMin);
-          const y2 = ev.isInterval ? yOf(ev.endMin as number) : y1;
-          // 区间条高度 = 该任务占用的时间区间映射到时间轴刻度的长度（时长越长条越高）
-          const pillH = ev.isInterval ? Math.max(1, Math.abs(y2 - y1)) : pointR * 2;
-          const pillY = ev.isInterval ? Math.min(y1, y2) : y1 - pointR;
-          const showInside = pillH >= 30;
-          const iconSize = 15;
-          const fontSize = 12;
-
+        {/* 左侧：时间点 + 曲线连接到轴线 */}
+        {points.map((ev) => {
+          const px = pointX(ev.lane);
+          const py = yOf(ev.startMin);
+          const dx = axisX - px;
+          const d = `M ${px},${py} C ${px + dx * 0.35},${py - 12}, ${axisX - dx * 0.15},${py + 8}, ${axisX},${py}`;
+          const show = hover === ev.key;
           return (
-            <g key={ev.key} className="dl-ev" onClick={() => onEventClick(ev)}>
-              {/* 区间 / 时间点块 */}
-              {ev.isInterval ? (
-                <rect x={laneX + 2} y={pillY} width={laneW - 4} height={pillH} rx={6}
-                  fill={ev.color} fillOpacity={0.9} />
-              ) : (
-                <circle cx={cx} cy={y1} r={pointR} fill={ev.color} />
+            <g key={ev.key} className="dl-ev"
+              onClick={() => onEventClick(ev)}
+              onMouseEnter={() => setHover(ev.key)}
+              onMouseLeave={() => setHover(null)}>
+              {/* 曲线连接到轴线 */}
+              <path d={d} fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3" />
+              {/* 时间点 */}
+              <circle cx={px} cy={py} r={pointR} fill={ev.color} />
+              {/* 悬停标签 */}
+              {show && (
+                <text x={px - pointR - 8} y={py} textAnchor="end" dominantBaseline="central"
+                  fontSize={13} paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3} strokeLinejoin="round">
+                  <tspan>{ev.icon} </tspan>
+                  <tspan fontWeight={600}>{ev.taskValue}</tspan>
+                  <tspan fontWeight={800} fill={ev.color}> {formatTime(ev.startMin)}</tspan>
+                </text>
               )}
+            </g>
+          );
+        })}
 
-              {/* 图标 + 文字标签 */}
-              {ev.isInterval && showInside ? (
-                <>
-                  <text x={laneX + 8 + iconSize / 2} y={pillY + pillH / 2} textAnchor="middle"
-                    dominantBaseline="central" fontSize={iconSize}>{ev.icon}</text>
-                  <text x={laneX + 8 + iconSize + 5} y={pillY + pillH / 2} textAnchor="start"
-                    dominantBaseline="central" fontSize={fontSize} fontWeight={600} fill="#fff">
-                    {truncate(ev.taskValue, Math.max(6, (laneW - 20 - iconSize - 6) / fontSize))}
-                  </text>
-                </>
-              ) : (
-                <>
-                  <line x1={ev.isInterval ? laneX + laneW - 4 : cx + pointR} y1={pillY + pillH / 2}
-                    x2={ev.isInterval ? laneX + laneW - 4 : cx + pointR + 8} y2={pillY + pillH / 2}
-                    stroke={ev.color} strokeWidth={1.5} />
-                  <text x={ev.isInterval ? laneX + laneW - 4 + 6 : cx + pointR + 8} y={pillY + pillH / 2}
-                    textAnchor="start" dominantBaseline="central" fontSize={iconSize}>{ev.icon}</text>
-                  <text x={ev.isInterval ? laneX + laneW - 4 + 6 + iconSize + 3 : cx + pointR + 8 + iconSize + 3}
-                    y={pillY + pillH / 2} textAnchor="start" dominantBaseline="central"
-                    fontSize={fontSize} fontWeight={600} fill="var(--dl-text,#1f2329)">
-                    {truncate(ev.taskValue, 16)}
-                  </text>
-                </>
+        {/* 右侧：时间区间 */}
+        {intervals.map((ev) => {
+          const x = barX(ev.lane);
+          const y1 = yOf(ev.startMin);
+          const y2 = yOf(ev.endMin as number);
+          const yTop = Math.min(y1, y2);
+          const h = Math.max(1, Math.abs(y2 - y1));
+          const show = hover === ev.key;
+          return (
+            <g key={ev.key} className="dl-ev"
+              onClick={() => onEventClick(ev)}
+              onMouseEnter={() => setHover(ev.key)}
+              onMouseLeave={() => setHover(null)}>
+              {/* 区间条：高度 = 时间区间映射到刻度 */}
+              <rect x={x} y={yTop} width={BAR_W} height={h} rx={5} fill={ev.color} fillOpacity={0.9} />
+              {/* 悬停标签（时间加粗醒目） */}
+              {show && (
+                <text x={x + BAR_W + 8} y={yTop + h / 2} textAnchor="start" dominantBaseline="central"
+                  fontSize={13} paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3} strokeLinejoin="round">
+                  <tspan>{ev.icon} </tspan>
+                  <tspan fontWeight={600}>{ev.taskValue}</tspan>
+                  <tspan fontWeight={800} fill={ev.color}> {formatTime(ev.startMin)}–{formatTime(ev.endMin as number)}</tspan>
+                </text>
               )}
-
-              {/* 时间标注 */}
-              <text x={cx} y={ev.isInterval ? y1 - 6 : y1 - pointR - 6}
-                textAnchor="middle" dominantBaseline="central" fontSize={10}
-                fill="var(--dl-sub,#999)">
-                {ev.isInterval
-                  ? `${formatTime(ev.startMin)} – ${formatTime(ev.endMin as number)}`
-                  : formatTime(ev.startMin)}
-              </text>
             </g>
           );
         })}
       </svg>
     </div>
   );
-}
-
-function truncate(s: string, n: number): string {
-  return s.length > n ? s.slice(0, n) + '…' : s;
 }
