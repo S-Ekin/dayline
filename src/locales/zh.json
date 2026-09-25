@@ -24,7 +24,6 @@
   "label.eventIcon": "事件图标",
   "label.hourHeight": "每小时间距",
   "label.pointRadius": "时间点大小",
-  "label.barHeight": "区间条高度",
   "section.layout": "布局",
   "confirm": "确定",
   "please.config": "请在右侧配置记录表与字段",

@@ -35,7 +35,6 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   }
 
   const hourH = custom.hourHeight;
-  const barH = custom.barHeight;
   const pointR = custom.pointRadius;
 
   const maxLane = events.reduce((m, e) => Math.max(m, e.lane), 0);
@@ -95,8 +94,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const cx = laneX + laneW / 2;
           const y1 = yOf(ev.startMin);
           const y2 = ev.isInterval ? yOf(ev.endMin as number) : y1;
-          const pillH = ev.isInterval ? Math.max(barH, y2 - y1) : barH;
-          const pillY = ev.isInterval ? Math.min(y1, y2) : y1 - pillH / 2;
+          // 区间条高度 = 该任务占用的时间区间映射到时间轴刻度的长度（时长越长条越高）
+          const pillH = ev.isInterval ? Math.max(1, Math.abs(y2 - y1)) : pointR * 2;
+          const pillY = ev.isInterval ? Math.min(y1, y2) : y1 - pointR;
           const showInside = pillH >= 30;
           const iconSize = 15;
           const fontSize = 12;

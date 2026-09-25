@@ -37,7 +37,6 @@ export interface ICustomConfig {
   /** 布局 */
   hourHeight: number;
   pointRadius: number;
-  barHeight: number;
 }
 
 export const DEFAULT_CONFIG: ICustomConfig = {
@@ -50,7 +49,6 @@ export const DEFAULT_CONFIG: ICustomConfig = {
   defaultColor: '#3370ff',
   hourHeight: 34,
   pointRadius: 7,
-  barHeight: 22,
 };
 
 /** 兼容缺失字段的旧配置 */

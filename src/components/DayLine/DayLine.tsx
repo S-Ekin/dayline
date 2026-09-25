@@ -556,10 +556,6 @@ export default function DayLine(props: { bgColor: string }) {
               <Slider min={3} max={16} step={1} value={custom.pointRadius}
                 onChange={(v) => updateCustom({ pointRadius: v as number })} />
             </Item>
-            <Item label={`${t('label.barHeight')}：${custom.barHeight}px`}>
-              <Slider min={10} max={40} step={2} value={custom.barHeight}
-                onChange={(v) => updateCustom({ barHeight: v as number })} />
-            </Item>
 
             <div className="dl-save-row">
               <Button className="dl-btn" theme="solid" onClick={onSave} block disabled={custom.tables.length === 0}>
