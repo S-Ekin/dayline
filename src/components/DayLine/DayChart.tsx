@@ -142,7 +142,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               onClick={() => onEventClick(ev)}
               onMouseEnter={() => setHover(ev.key)}
               onMouseLeave={() => setHover(null)}>
-              <rect x={x} y={yTop} width={BAR_W} height={h} rx={5} fill={ev.color} fillOpacity={0.9} />
+              <rect x={x} y={yTop} width={BAR_W} height={h} rx={5} fill={ev.color} />
               {iconInside ? (
                 <text x={x + BAR_W / 2} y={yTop + h / 2} textAnchor="middle" dominantBaseline="central" fontSize={14}>
                   {ev.icon}

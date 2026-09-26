@@ -3,7 +3,7 @@ import {
   dashboard, bitable, ui, DashboardState, GroupMode, ORDER,
   DATA_SOURCE_SORT_TYPE, SourceType, FieldType,
 } from '@lark-base-open/js-sdk';
-import { Button, DatePicker, Select, Input, Switch, Slider, Modal } from '@douyinfe/semi-ui';
+import { Button, DatePicker, Select, Input, Switch, Slider, Modal, ColorPicker } from '@douyinfe/semi-ui';
 import dayjs from 'dayjs';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
@@ -381,13 +381,7 @@ export default function DayLine(props: { bgColor: string }) {
                       return (
                         <div key={ts.tableId} className="dl-table-card">
                           <div className="dl-table-card-head">
-                            <input
-                              type="color"
-                              value={ts.color}
-                              onChange={(e) => setTableColor(ts.tableId, e.target.value)}
-                              className="dl-event-color"
-                              title={t('label.color')}
-                            />
+                            <ColorField className="dl-event-color" value={ts.color} onChange={(c) => setTableColor(ts.tableId, c)} />
                             <span className="dl-table-name">{ts.tableName || ts.tableId}</span>
                             <button
                               type="button"
@@ -480,12 +474,7 @@ export default function DayLine(props: { bgColor: string }) {
                   size={36}
                 />
                 <div className="dl-color-row">
-                  <input
-                    type="color"
-                    value={custom.defaultColor}
-                    onChange={(e) => updateCustom({ defaultColor: e.target.value })}
-                    className="dl-color-input"
-                  />
+                  <ColorField className="dl-color-input" value={custom.defaultColor} onChange={(c) => updateCustom({ defaultColor: c })} />
                   <span className="dl-color-hex">{custom.defaultColor}</span>
                 </div>
               </div>
@@ -503,13 +492,7 @@ export default function DayLine(props: { bgColor: string }) {
                           size={28}
                         />
                         <span title={task.value}>{task.value}</span>
-                        <input
-                          type="color"
-                          value={style.color}
-                          onChange={(e) => setEventStyle(task.key, { color: e.target.value })}
-                          className="dl-event-color"
-                          title={t('label.color')}
-                        />
+                        <ColorField className="dl-event-color" value={style.color} onChange={(c) => setEventStyle(task.key, { color: c })} />
                         <button
                           type="button"
                           className="dl-event-remove"
@@ -601,6 +584,28 @@ export default function DayLine(props: { bgColor: string }) {
 const PALETTE = ['#3370ff', '#7f3bf5', '#f54a45', '#10b981', '#fa8c16', '#eb2f96', '#00b8d9', '#5b8ff9', '#f7ba2a', '#8a2be2'];
 function pickColor(index: number): string {
   return PALETTE[index % PALETTE.length];
+}
+
+/* 支持透明度的颜色选择器（Semi ColorPicker 封装，弹出式色板） */
+function ColorField({ value, onChange, className }: { value: string; onChange: (c: string) => void; className?: string }) {
+  const val = useMemo(() => {
+    const raw = value && /^#/.test(value) || /^rgba?\(/.test(value || '') ? (value || '#999999') : '#999999';
+    try {
+      return ColorPicker.colorStringToValue(raw);
+    } catch {
+      return ColorPicker.colorStringToValue('#999999');
+    }
+  }, [value]);
+  return (
+    <ColorPicker usePopover alpha value={val} onChange={(v) => onChange(rgbaString(v))}>
+      <span className={className} style={{ background: value || '#999999' }} />
+    </ColorPicker>
+  );
+}
+
+function rgbaString(v: { rgba: { r: number; g: number; b: number; a: number } }): string {
+  const { r, g, b, a } = v.rgba;
+  return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${Math.round(a * 100) / 100})`;
 }
 
 function isToday(ts: number): boolean {
