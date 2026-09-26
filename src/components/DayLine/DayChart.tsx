@@ -45,9 +45,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const intervals = events.filter((e) => e.isInterval);
   const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
 
-  // 轴线固定在容器 45% 处（偏左，右侧留给区间）
+  // 轴线固定在容器正中
   const W = width;
-  const axisX = W * 0.45;
+  const axisX = W / 2;
   const leftUsable = axisX - AXIS_GAP - PAD_LEFT - 2 * pointR - 8;
   const rightUsable = W - axisX - AXIS_GAP - DEFAULT_BAR_W - 8;
   const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
@@ -140,13 +140,13 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
         <line x1={axisX} y1={padTop} x2={axisX} y2={chartH - padBottom}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
-        {/* 刻度：整点画一条短刻度线 + 时刻文字（画在轴线上，仅任务范围，支持 24/25/26…） */}
+        {/* 刻度：整点画一条显著的短刻度线 + 时刻文字（画在轴线上，仅任务范围，支持 24/25/26…） */}
         {hours.map((h) => {
           const y = yOf(h * 60);
           return (
             <g key={h}>
-              <line x1={axisX - 9} y1={y} x2={axisX + 9} y2={y}
-                stroke="var(--dl-axis,#10b981)" strokeWidth={h === startHour ? 1.6 : 1.3} />
+              <line x1={axisX - 10} y1={y} x2={axisX + 10} y2={y}
+                stroke="var(--dl-tick,#059669)" strokeWidth={2} />
               <text x={axisX} y={y} textAnchor="middle" dominantBaseline="central"
                 fontSize={10} fill="var(--dl-hour,#888)"
                 paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3}>
