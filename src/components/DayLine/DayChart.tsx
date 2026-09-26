@@ -24,7 +24,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(260, entries[0].contentRect.width));
+      setWidth(Math.max(250, entries[0].contentRect.width));
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -45,9 +45,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const intervals = events.filter((e) => e.isInterval);
   const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
 
-  // 轴线固定在容器正中
+  // 轴线固定在容器 45% 处（偏左，右侧留给区间）
   const W = width;
-  const axisX = W / 2;
+  const axisX = W * 0.45;
   const leftUsable = axisX - AXIS_GAP - PAD_LEFT - 2 * pointR - 8;
   const rightUsable = W - axisX - AXIS_GAP - DEFAULT_BAR_W - 8;
   const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
@@ -90,32 +90,32 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const barX = (lane: number) => slotX[lane] ?? (axisX + AXIS_GAP);
   const barW = (w: number) => Math.max(2, Math.min(w || DEFAULT_BAR_W, rightUsable) * slotScale);
 
-  // 时间点曲线错开：若与其他点垂直距离过近，放大弧度并交替方向，避免曲线纠缠
-  const gapThreshold = 22;
+  // 连接线（左时间点 + 右区间）避让：若会撞到刻度线或其他任务的连接线，就调整弯曲度与方向
+  const gapThreshold = 18;
   const maxBend = 18;
-  const pointsMeta = points.map((ev) => {
-    const py = yOf(ev.startMin);
-    let minGap = Infinity;
-    for (const o of points) {
-      if (o.key === ev.key) continue;
-      const g = Math.abs(yOf(o.startMin) - py);
-      if (g < minGap) minGap = g;
-    }
-    return { ev, py, minGap };
-  });
-  const crowded = pointsMeta
-    .filter((p) => p.minGap < gapThreshold)
-    .sort((a, b) => a.py - b.py);
-  const dirByKey = new Map<string, number>();
-  crowded.forEach((p, i) => dirByKey.set(p.ev.key, i % 2 === 0 ? -1 : 1));
+  const defaultArc = 5;
+  const lineInfos = [
+    ...points.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
+    ...intervals.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
+  ];
+  const obstacleYs = [
+    ...lineInfos.map((l) => l.py),
+    ...hours.map((h) => yOf(h * 60)), // 刻度线
+  ];
   const offYByKey = new Map<string, number>();
-  for (const p of pointsMeta) {
-    const dir = dirByKey.get(p.ev.key);
-    if (dir == null) {
-      offYByKey.set(p.ev.key, 5); // 默认轻微上弧
+  for (const li of lineInfos) {
+    let minGap = Infinity;
+    let dir = 0;
+    for (const y of obstacleYs) {
+      const g = Math.abs(y - li.py);
+      if (g < 0.5) continue; // 自身或重叠位置，忽略
+      if (g < minGap) { minGap = g; dir = y < li.py ? -1 : 1; } // 干扰在上→往下弧，干扰在下→往上弧
+    }
+    if (minGap === Infinity || minGap >= gapThreshold) {
+      offYByKey.set(li.key, defaultArc);
     } else {
-      const mag = Math.min(maxBend, 8 + Math.max(0, gapThreshold - p.minGap));
-      offYByKey.set(p.ev.key, dir * mag); // 近邻相互反向错开
+      const mag = Math.min(maxBend, Math.max(6, minGap * 1.2));
+      offYByKey.set(li.key, dir * mag);
     }
   }
 
@@ -163,9 +163,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               strokeLinecap="round" />
           );
         })}
-        {/* 区间条：开始时间 → 轴线 的连接线（水平直线，贴轴且不穿过刻度） */}
+        {/* 区间条：开始时间 → 轴线 的连接曲线（自动避让刻度与其他线） */}
         {intervals.map((ev) => (
-          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, 0)}
+          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, offYByKey.get(ev.key) ?? 5)}
             fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
             strokeLinecap="round" />
         ))}
