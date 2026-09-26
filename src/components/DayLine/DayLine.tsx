@@ -3,13 +3,14 @@ import {
   dashboard, bitable, ui, DashboardState, GroupMode, ORDER,
   DATA_SOURCE_SORT_TYPE, SourceType, FieldType,
 } from '@lark-base-open/js-sdk';
-import { Button, DatePicker, Select, Input, Switch, Slider, Modal, ColorPicker } from '@douyinfe/semi-ui';
+import { Button, DatePicker, Select, Input, Switch, Slider, Modal, ColorPicker, RadioGroup, Radio } from '@douyinfe/semi-ui';
 import dayjs from 'dayjs';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { Item } from '../Item';
-import { ICustomConfig, DEFAULT_CONFIG, normalizeConfig, DatePreset, TableSource } from './config';
+import { ICustomConfig, DEFAULT_CONFIG, normalizeConfig, DatePreset, TableSource, Orientation } from './config';
 import { DayChart } from './DayChart';
+import { HorizontalDayChart } from './HorizontalDayChart';
 import { IconPicker } from './IconPicker';
 import {
   DayEvent, buildDayEvents, getDayStartByPreset, formatDate, formatFieldValue,
@@ -327,22 +328,14 @@ export default function DayLine(props: { bgColor: string }) {
         <div className="dl-scroll">
           {loading ? (
             <div className="dl-chart empty">…</div>
-          ) : events.length === 0 ? (
-            <DayChart
-              events={[]}
-              custom={custom}
-              isToday={isToday(dayStart)}
-              emptyText={custom.tables.length === 0 ? t('please.selectTable') : t('no.data')}
-              onEventClick={handleEventClick}
-            />
           ) : (
-            <DayChart
-              events={events}
-              custom={custom}
-              isToday={isToday(dayStart)}
-              emptyText=""
-              onEventClick={handleEventClick}
-            />
+            renderChart(
+              events,
+              custom,
+              isToday(dayStart),
+              custom.tables.length === 0 ? t('please.selectTable') : t('no.data'),
+              handleEventClick
+            )
           )}
         </div>
       </div>
@@ -517,6 +510,16 @@ export default function DayLine(props: { bgColor: string }) {
             )}
 
             <div className="dl-section">{t('section.layout')}</div>
+            <Item label={t('label.orientation')}>
+              <RadioGroup
+                type="button"
+                value={custom.orientation}
+                onChange={(v: any) => updateCustom({ orientation: v as Orientation })}
+              >
+                <Radio value="vertical">{t('orientation.vertical')}</Radio>
+                <Radio value="horizontal">{t('orientation.horizontal')}</Radio>
+              </RadioGroup>
+            </Item>
             <Item label={`${t('label.hourHeight')}：${custom.hourHeight}px`}>
               <Slider min={16} max={80} step={2} value={custom.hourHeight}
                 onChange={(v) => updateCustom({ hourHeight: v as number })} />
@@ -594,6 +597,26 @@ export default function DayLine(props: { bgColor: string }) {
 const PALETTE = ['#3370ff', '#7f3bf5', '#f54a45', '#10b981', '#fa8c16', '#eb2f96', '#00b8d9', '#5b8ff9', '#f7ba2a', '#8a2be2'];
 function pickColor(index: number): string {
   return PALETTE[index % PALETTE.length];
+}
+
+/** 按配置的布局方向选择竖向 / 横向时间轴 */
+function renderChart(
+  events: DayEvent[],
+  custom: ICustomConfig,
+  isToday: boolean,
+  emptyText: string,
+  onEventClick: (ev: DayEvent) => void
+) {
+  const Chart = custom.orientation === 'horizontal' ? HorizontalDayChart : DayChart;
+  return (
+    <Chart
+      events={events}
+      custom={custom}
+      isToday={isToday}
+      emptyText={emptyText}
+      onEventClick={onEventClick}
+    />
+  );
 }
 
 /* 支持透明度的颜色选择器（Semi ColorPicker 封装，弹出式色板） */

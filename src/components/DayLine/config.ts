@@ -19,10 +19,13 @@ export interface TableSource {
   color: string;
 }
 
+/** 布局方向：竖向（时间轴从上到下）/ 横向（时间轴从左到右） */
+export type Orientation = 'vertical' | 'horizontal';
+
 export interface ICustomConfig {
   title: string;
   showTitle: boolean;
-  /** 选中的记录表（可多个） */
+  /** 选中记录表（可多个） */
   tables: TableSource[];
   /** 日期快捷方式 */
   datePreset: DatePreset;
@@ -36,6 +39,8 @@ export interface ICustomConfig {
   defaultBarWidth: number;
   /** 按「tableId::展示字段值」配置的图标 / 颜色 / 条宽 */
   eventConfigs?: Record<string, { icon: string; color: string; width?: number }>;
+  /** 布局方向 */
+  orientation: Orientation;
   /** 布局 */
   hourHeight: number;
   pointRadius: number;
@@ -50,6 +55,7 @@ export const DEFAULT_CONFIG: ICustomConfig = {
   icon: '📌',
   defaultColor: '#3370ff',
   defaultBarWidth: 30,
+  orientation: 'vertical',
   hourHeight: 34,
   pointRadius: 7,
 };
@@ -69,6 +75,9 @@ export function normalizeConfig(saved: any): ICustomConfig {
   }));
   if (!['today', 'yesterday', 'beforeYesterday', 'custom'].includes(merged.datePreset)) {
     merged.datePreset = 'today';
+  }
+  if (!['vertical', 'horizontal'].includes(merged.orientation)) {
+    merged.orientation = 'vertical';
   }
   if (!merged.customDate) merged.customDate = DEFAULT_CONFIG.customDate;
   return merged;
