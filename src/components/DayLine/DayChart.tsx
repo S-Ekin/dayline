@@ -24,7 +24,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(250, entries[0].contentRect.width));
+      setWidth(Math.max(240, entries[0].contentRect.width));
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -90,13 +90,23 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const barX = (lane: number) => slotX[lane] ?? (axisX + AXIS_GAP);
   const barW = (w: number) => Math.max(2, Math.min(w || DEFAULT_BAR_W, rightUsable) * slotScale);
 
+  // 区间连接点：取开始时间所在 y 再向下微移，避开条顶圆角，保证曲线与区块连上无空隙
+  const intervalLink = new Map<string, number>();
+  for (const ev of intervals) {
+    const y1 = yOf(ev.startMin);
+    const y2 = yOf(ev.endMin as number);
+    const hh = Math.max(1, Math.abs(y2 - y1));
+    const drop = Math.min(10, hh * 0.5);
+    intervalLink.set(ev.key, y1 + drop);
+  }
+
   // 连接线（左时间点 + 右区间）避让：若会撞到刻度线或其他任务的连接线，就调整弯曲度与方向
   const gapThreshold = 18;
-  const maxBend = 18;
-  const defaultArc = 5;
+  const maxBend = 12;
+  const defaultArc = 3;
   const lineInfos = [
     ...points.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
-    ...intervals.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
+    ...intervals.map((ev) => ({ key: ev.key, py: intervalLink.get(ev.key) ?? yOf(ev.startMin) })),
   ];
   const obstacleYs = [
     ...lineInfos.map((l) => l.py),
@@ -114,7 +124,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
     if (minGap === Infinity || minGap >= gapThreshold) {
       offYByKey.set(li.key, defaultArc);
     } else {
-      const mag = Math.min(maxBend, Math.max(6, minGap * 1.2));
+      const mag = Math.min(maxBend, Math.max(4, minGap * 0.9));
       offYByKey.set(li.key, dir * mag);
     }
   }
@@ -158,17 +168,20 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
           return (
-            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX, offYByKey.get(ev.key) ?? 5)}
+            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX, offYByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
         })}
-        {/* 区间条：开始时间 → 轴线 的连接曲线（自动避让刻度与其他线） */}
-        {intervals.map((ev) => (
-          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, offYByKey.get(ev.key) ?? 5)}
-            fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
-            strokeLinecap="round" />
-        ))}
+        {/* 区间条：连接点下移到条内（连上无空隙），曲线自动避让刻度与其他线 */}
+        {intervals.map((ev) => {
+          const ly = intervalLink.get(ev.key) ?? yOf(ev.startMin);
+          return (
+            <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), ly, axisX, offYByKey.get(ev.key) ?? defaultArc)}
+              fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
+              strokeLinecap="round" />
+          );
+        })}
         {points.map((ev) => {
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
