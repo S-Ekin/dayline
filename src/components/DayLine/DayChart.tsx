@@ -76,6 +76,35 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const pointX = (lane: number) => axisX - AXIS_GAP - pointR - 8 - lane * pointStep;
   const barX = (lane: number) => axisX + AXIS_GAP + lane * intervalStep;
 
+  // 时间点曲线错开：若与其他点垂直距离过近，放大弧度并交替方向，避免曲线纠缠
+  const gapThreshold = 22;
+  const maxBend = 18;
+  const pointsMeta = points.map((ev) => {
+    const py = yOf(ev.startMin);
+    let minGap = Infinity;
+    for (const o of points) {
+      if (o.key === ev.key) continue;
+      const g = Math.abs(yOf(o.startMin) - py);
+      if (g < minGap) minGap = g;
+    }
+    return { ev, py, minGap };
+  });
+  const crowded = pointsMeta
+    .filter((p) => p.minGap < gapThreshold)
+    .sort((a, b) => a.py - b.py);
+  const dirByKey = new Map<string, number>();
+  crowded.forEach((p, i) => dirByKey.set(p.ev.key, i % 2 === 0 ? -1 : 1));
+  const offYByKey = new Map<string, number>();
+  for (const p of pointsMeta) {
+    const dir = dirByKey.get(p.ev.key);
+    if (dir == null) {
+      offYByKey.set(p.ev.key, 5); // 默认轻微上弧
+    } else {
+      const mag = Math.min(maxBend, 8 + Math.max(0, gapThreshold - p.minGap));
+      offYByKey.set(p.ev.key, dir * mag); // 近邻相互反向错开
+    }
+  }
+
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const showNow = isToday && nowMin >= rangeStartMin && nowMin <= rangeEndMin;
@@ -115,7 +144,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
           return (
-            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX)}
+            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX, offYByKey.get(ev.key) ?? 5)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -129,7 +158,8 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               onMouseEnter={() => setHover(ev.key)}
               onMouseLeave={() => setHover(null)}>
               <circle cx={px} cy={py} r={pointR} fill={ev.color} />
-              <text x={px - pointR - 6} y={py} textAnchor="end" dominantBaseline="central" fontSize={14}>
+              {/* 图标紧贴曲线起点的圆点上方 */}
+              <text x={px} y={py - pointR - 9} textAnchor="middle" dominantBaseline="central" fontSize={14}>
                 {ev.icon}
               </text>
             </g>
@@ -221,11 +251,11 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-/** 时间点→轴线的曲线：水平为主、垂直起伏收窄(≤6px)，避免扫过上下相邻图标 */
-function curvePath(px: number, py: number, axisX: number): string {
+/** 时间点→轴线的曲线：两端水平切向，中点按 offY 上下弧。offY=0 为直线；近邻点用更大、反向的 offY 相互错开 */
+function curvePath(px: number, py: number, axisX: number, offY: number): string {
   const dx = axisX - px;
-  const bend = Math.min(6, dx * 0.06);
-  const c1x = px + dx * 0.42;
-  const c2x = axisX - dx * 0.08;
-  return `M ${px},${py} C ${c1x},${py - bend}, ${c2x},${py + bend}, ${axisX},${py}`;
+  const dy = offY * 0.7;
+  const c1x = px + dx * 0.34;
+  const c2x = px + dx * 0.66;
+  return `M ${px},${py} C ${c1x},${py + dy}, ${c2x},${py + dy}, ${axisX},${py}`;
 }
