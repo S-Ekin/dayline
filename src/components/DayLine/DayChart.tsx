@@ -164,6 +164,12 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               strokeLinecap="round" />
           );
         })}
+        {/* 区间条：开始时间 → 轴线 的连接曲线（同样置于底层） */}
+        {intervals.map((ev) => (
+          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, 5)}
+            fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
+            strokeLinecap="round" />
+        ))}
         {points.map((ev) => {
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
