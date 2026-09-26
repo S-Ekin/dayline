@@ -109,9 +109,10 @@ export function formatFieldValue(val: any): string {
 const POINT_SPAN_MIN = 24;
 
 /**
- * 计算某条记录的时间点 / 区间（分钟）。
+ * 计算某条记录的时间点 / 区间（分钟，相对所选日期当天 0 点）。
  * - 有开始时间字段且取到值 → 用开始时间定位；否则用日期字段自带时刻
  * - 有结束时间字段且晚于开始 → 时间区间；否则为时间点
+ * - 支持跨天：开始/结束若晚于当天（次日），分钟值 >1440（即 24 点之后，如 26:00），由调用方据此延长时间轴刻度
  */
 export function resolveEventTime(
   fields: any,
@@ -131,11 +132,11 @@ export function resolveEventTime(
 
   const baseTs = startTs ?? dateTs;
   let startMin = (baseTs - dayStartMs) / MIN_MS;
-  startMin = Math.min(1440, Math.max(0, startMin));
+  startMin = Math.max(0, startMin);
 
   if (endTs != null) {
     let endMin = (endTs - dayStartMs) / MIN_MS;
-    endMin = Math.min(1440, Math.max(0, endMin));
+    endMin = Math.max(0, endMin);
     if (endMin > startMin) {
       return { startMin, endMin, isInterval: true };
     }

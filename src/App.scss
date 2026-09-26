@@ -16,6 +16,7 @@ body[theme-mode="light"] {
   --dl-bar-bg: #f3f5f7;
   --dl-hover: #e6f6ef;
   --dl-halo: rgba(255, 255, 255, 0.92);
+  --dl-tag-bg: #ffffff;
 }
 
 body[theme-mode="dark"] {
@@ -34,6 +35,7 @@ body[theme-mode="dark"] {
   --dl-bar-bg: #20242b;
   --dl-hover: #17342a;
   --dl-halo: rgba(20, 22, 26, 0.92);
+  --dl-tag-bg: #1f2329;
 }
 
 html,

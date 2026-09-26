@@ -117,12 +117,26 @@
 
 .dl-chart .dl-ev rect,
 .dl-chart .dl-ev circle {
-  transition: filter 0.15s ease;
+  transition: filter 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
 }
 
 .dl-chart .dl-ev:hover rect,
 .dl-chart .dl-ev:hover circle {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
+}
+
+.dl-chart .dl-ev:hover circle {
+  stroke: var(--dl-tag-bg, #fff);
+  stroke-width: 2;
+}
+
+.dl-chart .dl-ev:hover path {
+  stroke-width: 2;
+}
+
+/* 悬停提示标签（置顶显示，不响应指针） */
+.dl-chart .dl-tag {
+  pointer-events: none;
 }
 
 .dl-chart.empty {
