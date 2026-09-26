@@ -14,12 +14,12 @@ const PAD_LEFT = 16;
 const PAD_RIGHT = 16;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 16;
-/** lane0 时间点到轴线的间距（容纳图标） */
-const POINT_GAP = 22;
+/** lane0 时间点到轴线的间距（容纳轴上方横向刻度文字 + 图标） */
+const POINT_GAP = 34;
 /** 时间点 lane 的垂直步进 */
 const POINT_STEP_V = 30;
-/** 轴线到区间 lane0 的间距（容纳竖排刻度文字） */
-const AXIS_BOTTOM_GAP = 40;
+/** 轴线到区间 lane0 的间距 */
+const AXIS_BOTTOM_GAP = 30;
 /** 区间条 lane 的间隙 */
 const BAR_GAP = 10;
 
@@ -139,21 +139,18 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
         <line x1={PAD_LEFT} y1={axisY} x2={svgW - PAD_RIGHT} y2={axisY}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
-        {/* 刻度：整点竖短线 + 时刻文字竖排（一行一字、垂直向下，画在轴线下侧；仅任务范围，支持 24/25/26…） */}
+        {/* 刻度：整点竖短线 + 时刻文字（横向、画在轴线上侧；仅任务范围，支持 24/25/26…） */}
         {hours.map((h) => {
           const x = xOf(h * 60);
-          const label = String(h).padStart(2, '0').split('');
           return (
             <g key={h}>
               <line x1={x} y1={axisY - 6} x2={x} y2={axisY + 6}
                 stroke="var(--dl-tick,#0f172a)" strokeWidth={2} />
               {showTickText && (
-                <text x={x} y={axisY + 12} textAnchor="middle" dominantBaseline="hanging"
+                <text x={x} y={axisY - 13} textAnchor="middle" dominantBaseline="central"
                   fontSize={10} fill="var(--dl-hour,#888)"
                   paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3}>
-                  {label.map((c, i) => (
-                    <tspan key={i} x={x} dy={i === 0 ? 0 : 11}>{c}</tspan>
-                  ))}
+                  {String(h).padStart(2, '0')}
                 </text>
               )}
             </g>
@@ -176,12 +173,13 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
               strokeLinecap="round" />
           );
         })}
-        {/* 下方：区间条 → 轴线的连接曲线，从条上边缘向上连到轴，落点锚定在开始时间刻度 */}
+        {/* 下方：区间条 → 轴线的连接曲线，从条中间连到轴，落点锚定在开始时间刻度 */}
         {intervals.map((ev) => {
           const px = xOf(ev.startMin);
           const barT = intervalTopAt[ev.lane];
+          const barH = barHOf(ev.width);
           return (
-            <path key={`ib-${ev.key}`} d={curvePathH(px, barT, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ib-${ev.key}`} d={curvePathH(px, barT + barH / 2, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -204,13 +202,13 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           );
         })}
 
-        {/* 区间条（水平条，厚度按事件可配形成高低起伏，图标常显） */}
+        {/* 区间条（水平条，高度按事件独立可配形成高低起伏；图标放条内或条下方，常显） */}
         {intervals.map((ev) => {
           const x1 = xOf(ev.startMin);
           const x2 = xOf(ev.endMin as number);
           const w = Math.max(2, x2 - x1);
           const yTop = intervalTopAt[ev.lane];
-          const barH = barHAt(ev.lane);
+          const barH = barHOf(ev.width); // 每条独立高度，调一个只变一个
           const iconInside = w >= 24 && barH >= 20;
           return (
             <g key={ev.key} className="dl-ev"
@@ -223,7 +221,7 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
                   {ev.icon}
                 </text>
               ) : (
-                <text x={x1} y={yTop - 8} textAnchor="middle" dominantBaseline="central" fontSize={14}>
+                <text x={x1 + w / 2} y={yTop + barH + 8} textAnchor="middle" dominantBaseline="central" fontSize={14}>
                   {ev.icon}
                 </text>
               )}
