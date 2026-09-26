@@ -24,7 +24,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(280, entries[0].contentRect.width));
+      setWidth(Math.max(260, entries[0].contentRect.width));
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -163,9 +163,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
               strokeLinecap="round" />
           );
         })}
-        {/* 区间条：开始时间 → 轴线 的连接曲线（同样置于底层） */}
+        {/* 区间条：开始时间 → 轴线 的连接线（水平直线，贴轴且不穿过刻度） */}
         {intervals.map((ev) => (
-          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, 5)}
+          <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), yOf(ev.startMin), axisX, 0)}
             fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
             strokeLinecap="round" />
         ))}
