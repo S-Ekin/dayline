@@ -277,30 +277,20 @@ export default function DayLine(props: { bgColor: string }) {
     dashboard.saveConfig({ dataConditions, customConfig: custom } as any);
   };
 
-  const presetList: { key: DatePreset; label: string }[] = [
-    { key: 'today', label: t('preset.today') },
-    { key: 'yesterday', label: t('preset.yesterday') },
-    { key: 'beforeYesterday', label: t('preset.beforeYesterday') },
+  const presetOptions = [
+    { value: 'today', label: t('preset.today') },
+    { value: 'yesterday', label: t('preset.yesterday') },
+    { value: 'beforeYesterday', label: t('preset.beforeYesterday') },
+    { value: 'custom', label: t('preset.custom') },
   ];
 
-  const datePresetBtns = (
-    <div className="dl-date-btns">
-      {presetList.map((p) => (
-        <button
-          key={p.key}
-          className={classNames('dl-date-btn', { active: custom.datePreset === p.key })}
-          onClick={() => updateCustom({ datePreset: p.key })}
-        >
-          {p.label}
-        </button>
-      ))}
-      <button
-        className={classNames('dl-date-btn', { active: custom.datePreset === 'custom' })}
-        onClick={() => updateCustom({ datePreset: 'custom' })}
-      >
-        {t('preset.custom')}
-      </button>
-    </div>
+  const datePresetSelect = (
+    <Select
+      style={{ width: 104 }}
+      value={custom.datePreset}
+      optionList={presetOptions}
+      onChange={(v) => updateCustom({ datePreset: v as DatePreset })}
+    />
   );
 
   const detailCats = detail.ev ? (categoriesByTable[detail.ev.tableId] || []) : [];
@@ -311,22 +301,18 @@ export default function DayLine(props: { bgColor: string }) {
       className={classNames('dl-main', { 'dl-main-config': isConfig })}
     >
       <div className="dl-container">
-        {/* 顶部工具条：日期快捷 */}
+        {/* 顶部工具条：一行显示，日期下拉 + 标题 + 计数 + 刷新 */}
         <div className="dl-toolbar">
-          {datePresetBtns}
+          {datePresetSelect}
           {custom.datePreset === 'custom' && (
             <DatePicker
-              style={{ width: 150 }}
+              style={{ width: 136 }}
               type="date"
               value={custom.customDate}
               onChange={(d: any) => updateCustom({ customDate: d ? dayjs(d).startOf('day').valueOf() : custom.customDate })}
             />
           )}
           <span className="dl-day-title">{custom.showTitle && custom.title ? custom.title : formatDate(dayStart)}</span>
-          <span className="dl-day-sub">
-            {isToday(dayStart) ? `· ${t('preset.today')}` : ''}
-            {!isConfig ? ` · ${t('click.hint')}` : ''}
-          </span>
           {!isConfig && (
             <div className="dl-count">
               {loading ? '…' : `${t('table')} ${custom.tables.length} · ${events.length} ${t('records')}`}
@@ -470,25 +456,19 @@ export default function DayLine(props: { bgColor: string }) {
 
             <div className="dl-section">{t('section.date')}</div>
             <Item label={t('label.selectDate')}>
-              <div className="dl-date-presets">
-                {presetList.map((p) => (
-                  <button
-                    key={p.key}
-                    className={classNames('dl-date-btn', { active: custom.datePreset === p.key })}
-                    onClick={() => updateCustom({ datePreset: p.key })}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-              <DatePicker
-                style={{ width: '100%' }}
-                type="date"
-                value={custom.datePreset === 'custom' ? custom.customDate : dayStart}
-                onChange={(d: any) => {
-                  updateCustom({ datePreset: 'custom', customDate: d ? dayjs(d).startOf('day').valueOf() : custom.customDate });
-                }}
-              />
+              {datePresetSelect}
+              {custom.datePreset === 'custom' && (
+                <div style={{ marginTop: 8 }}>
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    type="date"
+                    value={custom.customDate}
+                    onChange={(d: any) => {
+                      updateCustom({ datePreset: 'custom', customDate: d ? dayjs(d).startOf('day').valueOf() : custom.customDate });
+                    }}
+                  />
+                </div>
+              )}
             </Item>
 
             <div className="dl-section">{t('section.style')}</div>
