@@ -176,13 +176,12 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
               strokeLinecap="round" />
           );
         })}
-        {/* 下方：区间条 → 轴线的连接曲线，落点锚定在开始时间刻度 */}
+        {/* 下方：区间条 → 轴线的连接曲线，从条上边缘向上连到轴，落点锚定在开始时间刻度 */}
         {intervals.map((ev) => {
           const px = xOf(ev.startMin);
           const barT = intervalTopAt[ev.lane];
-          const barH = barHAt(ev.lane);
           return (
-            <path key={`ib-${ev.key}`} d={curvePathH(px, barT + barH / 2, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ib-${ev.key}`} d={curvePathH(px, barT, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -247,17 +246,15 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           const tagW = Math.min(contentW + 26, 190);
           const tagH = 46;
 
-          // 锚点：时间点在上方→标签放节点上方；区间在下方→标签放条下方；水平居中于节点
+          // 锚点：提示框朝向轴线一侧——轴下区间放条上方、轴上时间点放节点下方；水平居中于节点
           let cx: number;
           let cy: number;
           if (ev.isInterval) {
             cx = xOf(ev.startMin);
-            const barT = intervalTopAt[ev.lane];
-            const barH = barHAt(ev.lane);
-            cy = barT + barH + 12 + tagH / 2;             // 条下方
+            cy = intervalTopAt[ev.lane] - 12 - tagH / 2;   // 条上方（贴轴线一侧）
           } else {
             cx = xOf(ev.startMin);
-            cy = pyOf(ev.lane) - pointR - 12 - tagH / 2;  // 节点上方
+            cy = pyOf(ev.lane) + pointR + 12 + tagH / 2;   // 节点下方（贴轴线一侧）
           }
           const rectX = Math.min(Math.max(cx - tagW / 2, 8), svgW - 8 - tagW);
           const textX = rectX + tagW / 2;
