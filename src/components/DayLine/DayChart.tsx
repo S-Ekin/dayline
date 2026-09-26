@@ -45,9 +45,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const intervals = events.filter((e) => e.isInterval);
   const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
 
-  // 轴线固定在容器正中
+  // 轴线固定在容器 55% 处（略偏右）
   const W = width;
-  const axisX = W / 2;
+  const axisX = W * 0.55;
   const leftUsable = axisX - AXIS_GAP - PAD_LEFT - 2 * pointR - 8;
   const rightUsable = W - axisX - AXIS_GAP - DEFAULT_BAR_W - 8;
   const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
