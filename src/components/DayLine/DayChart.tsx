@@ -225,19 +225,18 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const tagH = 46;
           const pad = 10;
 
-          // 几何：时间点标签靠右（贴近圆点左侧）；区间标签靠左（在条右侧）
+          // 几何：时间点（左）标签放右侧贴近圆点；区间（右）标签放左侧贴近条
           let tx: number; let anchor: 'start' | 'end'; let cy: number;
           if (ev.isInterval) {
             const x = barX(ev.lane);
-            const w = barW(ev.width);
             const yTop = Math.min(yOf(ev.startMin), yOf(ev.endMin as number));
             const hh = Math.max(1, Math.abs(yOf(ev.endMin as number) - yOf(ev.startMin)));
-            tx = x + w + 10;
-            anchor = 'start';
+            tx = x - 10;
+            anchor = 'end';
             cy = yTop + hh / 2;
           } else {
-            tx = pointX(ev.lane) - pointR - 10;
-            anchor = 'end';
+            tx = pointX(ev.lane) + pointR + 10;
+            anchor = 'start';
             cy = yOf(ev.startMin);
           }
           const rectX = anchor === 'end' ? tx - tagW : tx;
