@@ -24,7 +24,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(240, entries[0].contentRect.width));
+      setWidth(Math.max(230, entries[0].contentRect.width));
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
