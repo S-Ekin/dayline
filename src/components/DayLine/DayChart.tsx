@@ -106,7 +106,8 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const defaultArc = 3;
   const lineInfos = [
     ...points.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
-    ...intervals.map((ev) => ({ key: ev.key, py: intervalLink.get(ev.key) ?? yOf(ev.startMin) })),
+    // 区间连接线落点锚定在轴线上开始时间的精确刻度处，以此 y 做避让
+    ...intervals.map((ev) => ({ key: ev.key, py: yOf(ev.startMin) })),
   ];
   const obstacleYs = [
     ...lineInfos.map((l) => l.py),
@@ -168,16 +169,17 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
           return (
-            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX, offYByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX, py, offYByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
         })}
-        {/* 区间条：连接点下移到条内（连上无空隙），曲线自动避让刻度与其他线 */}
+        {/* 区间条：起点连到条内（连上无空隙），落点精确落在轴线上开始时间的刻度 */}
         {intervals.map((ev) => {
           const ly = intervalLink.get(ev.key) ?? yOf(ev.startMin);
+          const axisY = yOf(ev.startMin);
           return (
-            <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), ly, axisX, offYByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ib-${ev.key}`} d={curvePath(barX(ev.lane), ly, axisX, axisY, offYByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -285,11 +287,12 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-/** 时间点→轴线的曲线：两端水平切向，中点按 offY 上下弧。offY=0 为直线；近邻点用更大、反向的 offY 相互错开 */
-function curvePath(px: number, py: number, axisX: number, offY: number): string {
+/** 节点→轴线的曲线：起终点可不同 y，中点按 offY 上下弧。offY=0 为直线；近邻点用更大、反向的 offY 相互错开 */
+function curvePath(px: number, pyStart: number, axisX: number, pyEnd: number, offY: number): string {
   const dx = axisX - px;
+  const mid = (pyStart + pyEnd) / 2;
   const dy = offY * 0.7;
   const c1x = px + dx * 0.34;
   const c2x = px + dx * 0.66;
-  return `M ${px},${py} C ${c1x},${py + dy}, ${c2x},${py + dy}, ${axisX},${py}`;
+  return `M ${px},${pyStart} C ${c1x},${mid + dy}, ${c2x},${mid + dy}, ${axisX},${pyEnd}`;
 }
