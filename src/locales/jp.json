@@ -24,6 +24,7 @@
   "label.eventIcon": "イベントアイコン",
   "label.hourHeight": "1時間あたりの高さ",
   "label.pointRadius": "点のサイズ",
+  "label.barWidth": "バーの幅",
   "section.layout": "レイアウト",
   "confirm": "確定",
   "please.config": "右側でテーブルとフィールドを設定してください",

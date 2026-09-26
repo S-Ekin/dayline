@@ -32,8 +32,10 @@ export interface ICustomConfig {
   icon: string;
   /** 默认颜色 */
   defaultColor: string;
-  /** 按「tableId::展示字段值」配置的图标与颜色 */
-  eventConfigs?: Record<string, { icon: string; color: string }>;
+  /** 区间条默认宽度（px），每个事件可单独覆盖以形成高低起伏 */
+  defaultBarWidth: number;
+  /** 按「tableId::展示字段值」配置的图标 / 颜色 / 条宽 */
+  eventConfigs?: Record<string, { icon: string; color: string; width?: number }>;
   /** 布局 */
   hourHeight: number;
   pointRadius: number;
@@ -47,6 +49,7 @@ export const DEFAULT_CONFIG: ICustomConfig = {
   customDate: dayjs().startOf('day').valueOf(),
   icon: '📌',
   defaultColor: '#3370ff',
+  defaultBarWidth: 30,
   hourHeight: 34,
   pointRadius: 7,
 };

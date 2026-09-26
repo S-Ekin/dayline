@@ -14,6 +14,8 @@ export interface DayEvent {
   taskValue: string;
   icon: string;
   color: string;
+  /** 区间条宽度（px）；时间点忽略 */
+  width: number;
   /** 距当天 0 点的分钟数 0~1440 */
   startMin: number;
   /** 区间结束分钟；null 表示时间点 */
@@ -152,7 +154,7 @@ export function resolveEventTime(
 export function buildDayEvents(
   dayStartMs: number,
   tableSources: { source: any; records: any[]; tableName: string }[],
-  style: (tableId: string, taskValue: string) => { icon: string; color: string }
+  style: (tableId: string, taskValue: string) => { icon: string; color: string; width: number }
 ): DayEvent[] {
   const events: DayEvent[] = [];
   for (const ts of tableSources) {
@@ -171,6 +173,7 @@ export function buildDayEvents(
         taskValue,
         icon: st.icon,
         color: st.color,
+        width: st.width,
         startMin: resolved.startMin,
         endMin: resolved.endMin,
         isInterval: resolved.isInterval,

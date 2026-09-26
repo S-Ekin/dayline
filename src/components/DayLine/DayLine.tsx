@@ -184,8 +184,9 @@ export default function DayLine(props: { bgColor: string }) {
     return {
       icon: conf?.icon || custom.icon,
       color: conf?.color || tableColor || custom.defaultColor,
+      width: conf?.width ?? custom.defaultBarWidth,
     };
-  }, [custom.eventConfigs, custom.icon, custom.defaultColor, custom.tables]);
+  }, [custom.eventConfigs, custom.icon, custom.defaultColor, custom.defaultBarWidth, custom.tables]);
 
   // ---- 构建事件 ----
   const events = useMemo<DayEvent[]>(() => {
@@ -241,7 +242,7 @@ export default function DayLine(props: { bgColor: string }) {
   const setTableColor = (tid: string, color: string) => patchTable(tid, { color });
 
   // ---- 事件图标 / 颜色 ----
-  const setEventStyle = (key: string, patch: { icon?: string; color?: string }) => {
+  const setEventStyle = (key: string, patch: { icon?: string; color?: string; width?: number }) => {
     const cur = custom.eventConfigs?.[key] || { icon: custom.icon, color: custom.defaultColor };
     updateCustom({ eventConfigs: { ...custom.eventConfigs, [key]: { ...cur, ...patch } } });
   };
@@ -491,8 +492,13 @@ export default function DayLine(props: { bgColor: string }) {
                           onChange={(ic) => setEventStyle(task.key, { icon: ic })}
                           size={28}
                         />
-                        <span title={task.value}>{task.value}</span>
+                        <span className="dl-chip-name" title={task.value}>{task.value}</span>
                         <ColorField className="dl-event-color" value={style.color} onChange={(c) => setEventStyle(task.key, { color: c })} />
+                        <div className="dl-chip-w" title={t('label.barWidth')}>
+                          <Slider style={{ width: 84 }} min={12} max={80} step={2} value={style.width}
+                            onChange={(v) => setEventStyle(task.key, { width: v as number })} />
+                          <span className="dl-chip-w-val">{style.width}</span>
+                        </div>
                         <button
                           type="button"
                           className="dl-event-remove"
@@ -518,6 +524,10 @@ export default function DayLine(props: { bgColor: string }) {
             <Item label={`${t('label.pointRadius')}：${custom.pointRadius}px`}>
               <Slider min={3} max={16} step={1} value={custom.pointRadius}
                 onChange={(v) => updateCustom({ pointRadius: v as number })} />
+            </Item>
+            <Item label={`${t('label.barWidth')}：${custom.defaultBarWidth}px`}>
+              <Slider min={12} max={80} step={2} value={custom.defaultBarWidth}
+                onChange={(v) => updateCustom({ defaultBarWidth: v as number })} />
             </Item>
 
             <div className="dl-save-row">

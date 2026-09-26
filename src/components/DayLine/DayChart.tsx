@@ -14,8 +14,7 @@ const PAD_LEFT = 22;
 const PAD_RIGHT = 22;
 const AXIS_GAP = 16;
 const POINT_STEP = 34;
-const BAR_W = 30;
-const INTERVAL_STEP = 38;
+const DEFAULT_BAR_W = 30;
 
 /** 24 小时时间轴：轴线居中；左侧时间点、右侧时间区间；刻度画在轴线上；图标常显，名称+时间两行悬停展示 */
 export function DayChart({ events, custom, isToday, emptyText, onEventClick }: DayChartProps) {
@@ -46,15 +45,13 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const points = events.filter((e) => !e.isInterval);
   const intervals = events.filter((e) => e.isInterval);
   const maxPointLane = points.reduce((m, e) => Math.max(m, e.lane), -1);
-  const maxIntervalLane = intervals.reduce((m, e) => Math.max(m, e.lane), -1);
 
   // 轴线固定在容器正中
   const W = width;
   const axisX = W / 2;
   const leftUsable = axisX - AXIS_GAP - PAD_LEFT - 2 * pointR - 8;
-  const rightUsable = W - axisX - AXIS_GAP - BAR_W - 8;
+  const rightUsable = W - axisX - AXIS_GAP - DEFAULT_BAR_W - 8;
   const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
-  const intervalStep = maxIntervalLane > 0 ? Math.min(INTERVAL_STEP, Math.max(8, rightUsable / maxIntervalLane)) : INTERVAL_STEP;
 
   // 时间轴显示范围：至少覆盖 06:00–23:00；任务超出该范围（含跨天）时向两侧延长，取整点边界
   const MIN_AXIS_START_MIN = 6 * 60;   // 06:00
@@ -74,7 +71,25 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const chartH = padTop + ((rangeEndMin - rangeStartMin) / 60) * hourH + padBottom;
   const yOf = (min: number) => padTop + ((min - rangeStartMin) / 60) * hourH;
   const pointX = (lane: number) => axisX - AXIS_GAP - pointR - 8 - lane * pointStep;
-  const barX = (lane: number) => axisX + AXIS_GAP + lane * intervalStep;
+
+  // 右侧区间：按每个 lane 的最大条宽分配槽位，宽度不同形成高低起伏，且整体不越界
+  const laneMaxW: number[] = [];
+  for (const ev of intervals) {
+    const w = Math.min(ev.width || DEFAULT_BAR_W, rightUsable);
+    laneMaxW[ev.lane] = Math.max(laneMaxW[ev.lane] || 0, w);
+  }
+  const lanePad = 8;
+  let totalNeed = 0;
+  for (const w of laneMaxW) totalNeed += w + lanePad;
+  const slotScale = totalNeed > rightUsable && totalNeed > 0 ? rightUsable / totalNeed : 1;
+  const slotX: number[] = [];
+  let _cx = axisX + AXIS_GAP;
+  for (let l = 0; l < laneMaxW.length; l++) {
+    slotX[l] = _cx;
+    _cx += (laneMaxW[l] * slotScale) + lanePad;
+  }
+  const barX = (lane: number) => slotX[lane] ?? (axisX + AXIS_GAP);
+  const barW = (w: number) => Math.max(2, Math.min(w || DEFAULT_BAR_W, rightUsable) * slotScale);
 
   // 时间点曲线错开：若与其他点垂直距离过近，放大弧度并交替方向，避免曲线纠缠
   const gapThreshold = 22;
@@ -166,26 +181,27 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           );
         })}
 
-        {/* 右侧：时间区间，图标常显 */}
+        {/* 右侧：时间区间，图标常显（条宽按事件可配，形成高低起伏） */}
         {intervals.map((ev) => {
           const x = barX(ev.lane);
+          const w = barW(ev.width);
           const y1 = yOf(ev.startMin);
           const y2 = yOf(ev.endMin as number);
           const yTop = Math.min(y1, y2);
           const h = Math.max(1, Math.abs(y2 - y1));
-          const iconInside = h >= 20;
+          const iconInside = w >= 22 && h >= 20;
           return (
             <g key={ev.key} className="dl-ev"
               onClick={() => onEventClick(ev)}
               onMouseEnter={() => setHover(ev.key)}
               onMouseLeave={() => setHover(null)}>
-              <rect x={x} y={yTop} width={BAR_W} height={h} rx={5} fill={ev.color} />
+              <rect x={x} y={yTop} width={w} height={h} rx={5} fill={ev.color} />
               {iconInside ? (
-                <text x={x + BAR_W / 2} y={yTop + h / 2} textAnchor="middle" dominantBaseline="central" fontSize={14}>
+                <text x={x + w / 2} y={yTop + h / 2} textAnchor="middle" dominantBaseline="central" fontSize={14}>
                   {ev.icon}
                 </text>
               ) : (
-                <text x={x + BAR_W + 4} y={yTop + h / 2} textAnchor="start" dominantBaseline="central" fontSize={14}>
+                <text x={x + w + 4} y={yTop + h / 2} textAnchor="start" dominantBaseline="central" fontSize={14}>
                   {ev.icon}
                 </text>
               )}
@@ -209,17 +225,18 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           const tagH = 46;
           const pad = 10;
 
-          // 几何：时间点标签靠右（在图标左侧）；区间标签靠左（在条右侧）
+          // 几何：时间点标签靠右（贴近圆点左侧）；区间标签靠左（在条右侧）
           let tx: number; let anchor: 'start' | 'end'; let cy: number;
           if (ev.isInterval) {
             const x = barX(ev.lane);
+            const w = barW(ev.width);
             const yTop = Math.min(yOf(ev.startMin), yOf(ev.endMin as number));
             const hh = Math.max(1, Math.abs(yOf(ev.endMin as number) - yOf(ev.startMin)));
-            tx = x + BAR_W + 10;
+            tx = x + w + 10;
             anchor = 'start';
             cy = yTop + hh / 2;
           } else {
-            tx = pointX(ev.lane) - pointR - 32;
+            tx = pointX(ev.lane) - pointR - 10;
             anchor = 'end';
             cy = yOf(ev.startMin);
           }
