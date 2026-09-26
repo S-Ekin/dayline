@@ -109,18 +109,25 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
             stroke="var(--dl-axis,#10b981)" strokeWidth={1.4} strokeDasharray="5,4" />
         )}
 
-        {/* 左侧：时间点 + 曲线连接到轴线，图标常显 */}
+        {/* 左侧：时间点 + 曲线连接到轴线 */}
+        {/* 曲线先全部绘制（置于底层），再绘制圆点与图标，保证连线不会盖住任何图标 */}
         {points.map((ev) => {
           const px = pointX(ev.lane);
           const py = yOf(ev.startMin);
-          const dx = axisX - px;
-          const d = `M ${px},${py} C ${px + dx * 0.35},${py - 12}, ${axisX - dx * 0.15},${py + 8}, ${axisX},${py}`;
+          return (
+            <path key={`ln-${ev.key}`} d={curvePath(px, py, axisX)}
+              fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
+              strokeLinecap="round" />
+          );
+        })}
+        {points.map((ev) => {
+          const px = pointX(ev.lane);
+          const py = yOf(ev.startMin);
           return (
             <g key={ev.key} className="dl-ev"
               onClick={() => onEventClick(ev)}
               onMouseEnter={() => setHover(ev.key)}
               onMouseLeave={() => setHover(null)}>
-              <path d={d} fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3" />
               <circle cx={px} cy={py} r={pointR} fill={ev.color} />
               <text x={px - pointR - 6} y={py} textAnchor="end" dominantBaseline="central" fontSize={14}>
                 {ev.icon}
@@ -212,4 +219,13 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+/** 时间点→轴线的曲线：水平为主、垂直起伏收窄(≤6px)，避免扫过上下相邻图标 */
+function curvePath(px: number, py: number, axisX: number): string {
+  const dx = axisX - px;
+  const bend = Math.min(6, dx * 0.06);
+  const c1x = px + dx * 0.42;
+  const c2x = axisX - dx * 0.08;
+  return `M ${px},${py} C ${c1x},${py - bend}, ${c2x},${py + bend}, ${axisX},${py}`;
 }
