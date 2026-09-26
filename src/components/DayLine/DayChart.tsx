@@ -140,13 +140,13 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
         <line x1={axisX} y1={padTop} x2={axisX} y2={chartH - padBottom}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
-        {/* 刻度（画在轴线上，仅任务范围，支持 24/25/26…） */}
+        {/* 刻度：整点画一条短刻度线 + 时刻文字（画在轴线上，仅任务范围，支持 24/25/26…） */}
         {hours.map((h) => {
           const y = yOf(h * 60);
           return (
             <g key={h}>
-              <line x1={axisX - 5} y1={y} x2={axisX + 5} y2={y}
-                stroke="var(--dl-axis,#10b981)" strokeWidth={h === startHour ? 1.4 : 1} />
+              <line x1={axisX - 9} y1={y} x2={axisX + 9} y2={y}
+                stroke="var(--dl-axis,#10b981)" strokeWidth={h === startHour ? 1.6 : 1.3} />
               <text x={axisX} y={y} textAnchor="middle" dominantBaseline="central"
                 fontSize={10} fill="var(--dl-hour,#888)"
                 paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3}>
