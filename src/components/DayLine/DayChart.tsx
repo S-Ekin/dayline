@@ -56,12 +56,14 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   const pointStep = maxPointLane > 0 ? Math.min(POINT_STEP, Math.max(8, leftUsable / maxPointLane)) : POINT_STEP;
   const intervalStep = maxIntervalLane > 0 ? Math.min(INTERVAL_STEP, Math.max(8, rightUsable / maxIntervalLane)) : INTERVAL_STEP;
 
-  // 时间轴仅显示有任务的范围：最早~最晚（含跨天），取整点边界，至少 1 小时
+  // 时间轴显示范围：至少覆盖 06:00–23:00；任务超出该范围（含跨天）时向两侧延长，取整点边界
+  const MIN_AXIS_START_MIN = 6 * 60;   // 06:00
+  const MIN_AXIS_END_MIN = 23 * 60;    // 23:00
   const mins = events.flatMap((e) => (e.isInterval ? [e.startMin, e.endMin as number] : [e.startMin]));
   const minMin = Math.min(...mins);
   const maxMin = Math.max(...mins);
-  const rangeStartMin = Math.floor(minMin / 60) * 60;
-  let rangeEndMin = Math.ceil(maxMin / 60) * 60;
+  const rangeStartMin = Math.min(Math.floor(minMin / 60) * 60, MIN_AXIS_START_MIN);
+  let rangeEndMin = Math.max(Math.ceil(maxMin / 60) * 60, MIN_AXIS_END_MIN);
   if (rangeEndMin <= rangeStartMin) rangeEndMin = rangeStartMin + 60;
   const startHour = rangeStartMin / 60;
   const endHour = rangeEndMin / 60;
