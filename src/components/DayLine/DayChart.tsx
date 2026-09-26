@@ -11,7 +11,6 @@ interface DayChartProps {
 }
 
 const PAD_LEFT = 22;
-const PAD_RIGHT = 22;
 const AXIS_GAP = 16;
 const POINT_STEP = 34;
 const DEFAULT_BAR_W = 30;
@@ -25,7 +24,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      setWidth(Math.max(360, entries[0].contentRect.width));
+      setWidth(Math.max(280, entries[0].contentRect.width));
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
@@ -147,9 +146,9 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
           );
         })}
 
-        {/* 现在时间线（仅显示线；超出任务范围则不显示） */}
+        {/* 现在时间线（以中轴为中心左右各 50px 的短线；超出任务范围则不显示） */}
         {showNow && (
-          <line x1={PAD_LEFT} y1={yOf(nowMin)} x2={W - PAD_RIGHT} y2={yOf(nowMin)}
+          <line x1={axisX - 50} y1={yOf(nowMin)} x2={axisX + 50} y2={yOf(nowMin)}
             stroke="var(--dl-axis,#10b981)" strokeWidth={1.4} strokeDasharray="5,4" />
         )}
 
