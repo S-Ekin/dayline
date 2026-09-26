@@ -147,7 +147,7 @@ export function DayChart({ events, custom, isToday, emptyText, onEventClick }: D
             <g key={h}>
               <line x1={axisX - 10} y1={y} x2={axisX + 10} y2={y}
                 stroke="var(--dl-tick,#059669)" strokeWidth={2} />
-              <text x={axisX} y={y} textAnchor="middle" dominantBaseline="central"
+              <text x={axisX - 14} y={y} textAnchor="end" dominantBaseline="central"
                 fontSize={10} fill="var(--dl-hour,#888)"
                 paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3}>
                 {String(h).padStart(2, '0')}:00
