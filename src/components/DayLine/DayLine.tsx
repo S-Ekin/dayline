@@ -527,7 +527,7 @@ export default function DayLine(props: { bgColor: string }) {
                 <Radio value="horizontal">{t('orientation.horizontal')}</Radio>
               </RadioGroup>
             </Item>
-            <Item label={`${t('label.hourHeight')}：${custom.hourHeight}px`}>
+            <Item label={`${custom.orientation === 'horizontal' ? t('label.hourSpanH') : t('label.hourHeight')}：${custom.hourHeight}px`}>
               <Slider min={16} max={80} step={2} value={custom.hourHeight}
                 onChange={(v) => updateCustom({ hourHeight: v as number })} />
             </Item>
@@ -535,7 +535,7 @@ export default function DayLine(props: { bgColor: string }) {
               <Slider min={3} max={16} step={1} value={custom.pointRadius}
                 onChange={(v) => updateCustom({ pointRadius: v as number })} />
             </Item>
-            <Item label={`${t('label.barWidth')}：${custom.defaultBarWidth}px`}>
+            <Item label={`${custom.orientation === 'horizontal' ? t('label.barHeight') : t('label.barWidth')}：${custom.defaultBarWidth}px`}>
               <Slider min={12} max={80} step={2} value={custom.defaultBarWidth}
                 onChange={(v) => updateCustom({ defaultBarWidth: v as number })} />
             </Item>

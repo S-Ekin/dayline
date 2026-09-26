@@ -70,13 +70,14 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
   const endHour = rangeEndMin / 60;
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
 
-  // 横向：时间轴填满容器宽度（一屏看全一天）
-  const usableW = width - PAD_LEFT - PAD_RIGHT;
-  const hPx = usableW / rangeHours;
+  // 横向：每小时间距由 hourHeight（横向间距）控制；宽度不足时横向滚动
+  const hPx = custom.hourHeight;
+  const usedW = PAD_LEFT + rangeHours * hPx + PAD_RIGHT;
+  const svgW = Math.max(width, usedW);
   const xOf = (min: number) => PAD_LEFT + ((min - rangeStartMin) / 60) * hPx;
 
-  // 区间条厚度（每 lane 取该 lane 内事件的最大值），形成高低起伏
-  const barHOf = (w: number) => Math.min(40, Math.max(12, w));
+  // 区间条厚度（每 lane 取该 lane 内事件的最大值，形成高低起伏）
+  const barHOf = (w: number) => Math.min(50, Math.max(10, w));
   const laneBarH: number[] = [];
   for (const ev of intervals) {
     laneBarH[ev.lane] = Math.max(laneBarH[ev.lane] || 0, barHOf(ev.width));
@@ -133,9 +134,9 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
 
   return (
     <div ref={containerRef} className="dl-chart">
-      <svg width={width} height={chartH} style={{ display: 'block', minWidth: '100%' }}>
+      <svg width={svgW} height={chartH} style={{ display: 'block', minWidth: '100%' }}>
         {/* 水平时间轴 */}
-        <line x1={PAD_LEFT} y1={axisY} x2={width - PAD_RIGHT} y2={axisY}
+        <line x1={PAD_LEFT} y1={axisY} x2={svgW - PAD_RIGHT} y2={axisY}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
         {/* 刻度：整点竖短线 + 时刻文字竖排（一行一字、垂直向下，画在轴线下侧；仅任务范围，支持 24/25/26…） */}
@@ -170,7 +171,7 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           const px = xOf(ev.startMin);
           const py = pyOf(ev.lane);
           return (
-            <path key={`ln-${ev.key}`} d={curvePathH(px, py, axisY, py, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ln-${ev.key}`} d={curvePathH(px, py, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -181,7 +182,7 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           const barT = intervalTopAt[ev.lane];
           const barH = barHAt(ev.lane);
           return (
-            <path key={`ib-${ev.key}`} d={curvePathH(px, barT + barH / 2, axisY, barT + barH / 2, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ib-${ev.key}`} d={curvePathH(px, barT + barH / 2, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -245,34 +246,32 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           const contentW = Math.max(iconW + 4 + nameW, timeW);
           const tagW = Math.min(contentW + 26, 190);
           const tagH = 46;
-          const pad = 10;
 
-          // 锚点：时间点在节点上方，区间在条上方；标签默认放右侧，空间不足则放左侧
+          // 锚点：时间点在上方→标签放节点上方；区间在下方→标签放条下方；水平居中于节点
           let cx: number;
           let cy: number;
           if (ev.isInterval) {
             cx = xOf(ev.startMin);
-            cy = intervalTopAt[ev.lane] + barHAt(ev.lane) / 2;
+            const barT = intervalTopAt[ev.lane];
+            const barH = barHAt(ev.lane);
+            cy = barT + barH + 12 + tagH / 2;             // 条下方
           } else {
             cx = xOf(ev.startMin);
-            cy = pyOf(ev.lane);
+            cy = pyOf(ev.lane) - pointR - 12 - tagH / 2;  // 节点上方
           }
-          const toRight = cx + pointR + 10 + tagW < width - 8;
-          const anchor: 'start' | 'end' = toRight ? 'start' : 'end';
-          const tx = toRight ? cx + pointR + 10 : cx - pointR - 10;
-          const rectX = toRight ? tx : tx - tagW;
-          const textX = toRight ? tx + pad : tx - pad;
+          const rectX = Math.min(Math.max(cx - tagW / 2, 8), svgW - 8 - tagW);
+          const textX = rectX + tagW / 2;
 
           return (
             <g className="dl-tag" pointerEvents="none">
               <rect x={rectX} y={cy - tagH / 2} width={tagW} height={tagH} rx={9}
                 fill="var(--dl-tag-bg,#fff)" stroke={ev.color} strokeWidth={1.2}
                 filter="drop-shadow(0 3px 8px rgba(0,0,0,0.14))" />
-              <text x={textX} y={cy - 6} textAnchor={anchor} dominantBaseline="central"
+              <text x={textX} y={cy - 6} textAnchor="middle" dominantBaseline="central"
                 fontSize={13} fontWeight={600} fill="var(--dl-text,#1f2329)">
                 <tspan>{ev.icon} </tspan>{name}
               </text>
-              <text x={textX} y={cy + 11} textAnchor={anchor} dominantBaseline="central"
+              <text x={textX} y={cy + 11} textAnchor="middle" dominantBaseline="central"
                 fontSize={13} fontWeight={800} fill={ev.color}>
                 {time}
               </text>
