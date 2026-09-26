@@ -168,18 +168,19 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
           const px = xOf(ev.startMin);
           const py = pyOf(ev.lane);
           return (
-            <path key={`ln-${ev.key}`} d={curvePathH(px, py, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ln-${ev.key}`} d={curvePathH(px, py, px, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
         })}
-        {/* 下方：区间条 → 轴线的连接曲线，从条中间连到轴，落点锚定在开始时间刻度 */}
+        {/* 下方：区间条 → 轴线的连接曲线，交界处在条上边缘中间，落点锚定在开始时间刻度 */}
         {intervals.map((ev) => {
           const px = xOf(ev.startMin);
           const barT = intervalTopAt[ev.lane];
-          const barH = barHOf(ev.width);
+          const xEnd = xOf(ev.endMin as number);
+          const midTopX = px + (xEnd - px) / 2; // 条上边缘中点
           return (
-            <path key={`ib-${ev.key}`} d={curvePathH(px, barT + barH / 2, axisY, axisY, offXByKey.get(ev.key) ?? defaultArc)}
+            <path key={`ib-${ev.key}`} d={curvePathH(midTopX, barT, px, axisY, offXByKey.get(ev.key) ?? defaultArc)}
               fill="none" stroke={ev.color} strokeWidth={1.5} strokeDasharray="3,3"
               strokeLinecap="round" />
           );
@@ -282,10 +283,11 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-/** 节点→轴线（横向）的曲线：两端竖直切向，中点按 offX 左右弧。offX=0 为直线；近邻点用更大、反向的 offX 相互错开 */
-function curvePathH(px: number, pyStart: number, axisY: number, pyEnd: number, offX: number): string {
+/** 节点→轴线（横向）的曲线：起终点 x 可不同，两端竖直切向，中点按 offX 左右弧。offX=0 为近直线 */
+function curvePathH(x1: number, y1: number, x2: number, y2: number, offX: number): string {
+  const mx = (x1 + x2) / 2;
   const dx = offX * 0.7;
-  const c1y = pyStart + (pyEnd - pyStart) * 0.34;
-  const c2y = pyStart + (pyEnd - pyStart) * 0.66;
-  return `M ${px},${pyStart} C ${px + dx},${c1y}, ${px + dx},${c2y}, ${px},${pyEnd}`;
+  const c1y = y1 + (y2 - y1) * 0.34;
+  const c2y = y1 + (y2 - y1) * 0.66;
+  return `M ${x1},${y1} C ${mx + dx},${c1y}, ${mx + dx},${c2y}, ${x2},${y2}`;
 }
