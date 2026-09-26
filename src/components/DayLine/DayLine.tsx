@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { Item } from '../Item';
-import { ICustomConfig, DEFAULT_CONFIG, normalizeConfig, DatePreset, TableSource, Orientation } from './config';
+import { ICustomConfig, DEFAULT_CONFIG, normalizeConfig, DatePreset, TableSource } from './config';
 import { DayChart } from './DayChart';
 import { HorizontalDayChart } from './HorizontalDayChart';
 import { IconPicker } from './IconPicker';
@@ -514,7 +514,14 @@ export default function DayLine(props: { bgColor: string }) {
               <RadioGroup
                 type="button"
                 value={custom.orientation}
-                onChange={(v: any) => updateCustom({ orientation: v as Orientation })}
+                onChange={(v: any) => {
+                  // Semi RadioGroup 回调可能是事件对象或直接值，统一安全取字符串
+                  const raw =
+                    v && typeof v === 'object'
+                      ? ((v as any).target?.value ?? (v as any).value)
+                      : v;
+                  updateCustom({ orientation: raw === 'horizontal' ? 'horizontal' : 'vertical' });
+                }}
               >
                 <Radio value="vertical">{t('orientation.vertical')}</Radio>
                 <Radio value="horizontal">{t('orientation.horizontal')}</Radio>

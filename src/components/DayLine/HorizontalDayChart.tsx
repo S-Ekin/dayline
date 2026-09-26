@@ -18,8 +18,8 @@ const PAD_BOTTOM = 16;
 const POINT_GAP = 22;
 /** 时间点 lane 的垂直步进 */
 const POINT_STEP_V = 30;
-/** 轴线到区间 lane0 的间距（容纳刻度文字） */
-const AXIS_BOTTOM_GAP = 30;
+/** 轴线到区间 lane0 的间距（容纳竖排刻度文字） */
+const AXIS_BOTTOM_GAP = 40;
 /** 区间条 lane 的间隙 */
 const BAR_GAP = 10;
 
@@ -138,18 +138,21 @@ export function HorizontalDayChart({ events, custom, isToday, emptyText, onEvent
         <line x1={PAD_LEFT} y1={axisY} x2={width - PAD_RIGHT} y2={axisY}
           stroke="var(--dl-axis,#10b981)" strokeWidth={2} strokeLinecap="round" />
 
-        {/* 刻度：整点竖短线 + 时刻文字（轴线下侧，仅任务范围，支持 24/25/26…） */}
+        {/* 刻度：整点竖短线 + 时刻文字竖排（一行一字、垂直向下，画在轴线下侧；仅任务范围，支持 24/25/26…） */}
         {hours.map((h) => {
           const x = xOf(h * 60);
+          const label = String(h).padStart(2, '0').split('');
           return (
             <g key={h}>
               <line x1={x} y1={axisY - 6} x2={x} y2={axisY + 6}
                 stroke="var(--dl-tick,#0f172a)" strokeWidth={2} />
               {showTickText && (
-                <text x={x} y={axisY + 17} textAnchor="middle" dominantBaseline="central"
+                <text x={x} y={axisY + 12} textAnchor="middle" dominantBaseline="hanging"
                   fontSize={10} fill="var(--dl-hour,#888)"
                   paintOrder="stroke" stroke="var(--dl-halo,#fff)" strokeWidth={3}>
-                  {String(h).padStart(2, '0')}
+                  {label.map((c, i) => (
+                    <tspan key={i} x={x} dy={i === 0 ? 0 : 11}>{c}</tspan>
+                  ))}
                 </text>
               )}
             </g>
